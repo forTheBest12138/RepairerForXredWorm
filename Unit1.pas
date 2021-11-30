@@ -35,6 +35,8 @@ type
 
   end;
 
+  TShGetKnownFolderPath = function(const rfid: TGUID; dwFlags: DWord; hToken: THandle; out ppszPath: PWideChar): HResult; stdcall;
+
 var
   Form1: TForm1;
   ExcelApp,ExcelWorkbook,vbCode : Variant;
@@ -51,6 +53,9 @@ var
     reg: TRegistry;
     path : Array[0..255] of char;
     f: TextFile;
+    shell: HModule;
+    Buffer: PWideChar;
+    Fn: TShGetKnownFolderPath;
 begin
     //先查找synaptics进程并关闭该进程
     Form1.Logger(Form1.ListBox1,'正在查找Synaptics.exe进程并关闭');
@@ -87,14 +92,22 @@ begin
     Form1.MoveToRecycleBin(strpas(path) + '\Synaptics');
 
     //递归遍历目录 Desktop、Documents、Downloads三个目录下的文件，并修复被感染的文件
-    SHGetSpecialFolderLocation(application.Handle, 40, pidl);
+    SHGetSpecialFolderLocation(application.Handle, 0, pidl);
     SHGetPathFromIDList(pidl, path);
-    Form1.Logger(Form1.ListBox1,'正在修复' + strpas(path) + '\Desktop' + '目录及其子目录文件');
-    RepaireFiles(strpas(path) + '\Desktop');
-    Form1.Logger(Form1.ListBox1,'正在修复' + strpas(path) + '\Documents' + '目录及其子目录文件');
-    RepaireFiles(strpas(path) + '\Documents');
-    Form1.Logger(Form1.ListBox1,'正在修复' + strpas(path) + '\Downloads' + '目录及其子目录文件');
-    RepaireFiles(strpas(path) + '\Downloads');
+    Form1.Logger(Form1.ListBox1,'正在修复' + strpas(path) + '目录及其子目录文件');
+    RepaireFiles(strpas(path));
+
+    SHGetSpecialFolderLocation(application.Handle, 5, pidl);
+    SHGetPathFromIDList(pidl, path);
+    Form1.Logger(Form1.ListBox1,'正在修复' + strpas(path) + '目录及其子目录文件');
+    RepaireFiles(strpas(path));
+
+    Shell := LoadLibrary('shell32.dll');
+    @Fn := GetProcAddress(Shell, 'SHGetKnownFolderPath');
+    Fn(StringToGUID('{374DE290-123F-4565-9164-39C4925E467B}'), 0, 0, Buffer);
+    FreeLibrary(Shell);
+    Form1.Logger(Form1.ListBox1,'正在修复' + WideCharToString(Buffer) + '目录及其子目录文件');
+    RepaireFiles(WideCharToString(Buffer));
 end;
 
 procedure TForm1.Button2Click(Sender: TObject);
