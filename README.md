@@ -1,5 +1,5 @@
 # RepairerForXredWorm
-xred蠕虫病毒修复工具。有关这个病毒的详细分析，文章在[这里]()。
+xred蠕虫病毒修复工具。有关这个病毒的详细分析，文章在[这里](https://www.freebuf.com/articles/system/306342.html)。
 
 编译环境：Delphi 10.4 Community Edition
 
